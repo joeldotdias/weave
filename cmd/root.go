@@ -62,12 +62,7 @@ Configuration can be written at $XDG_CONFIG_HOME/.config/weave/config.toml`,
 				cobra.CheckErr(err)
 			}
 			checkExit(tprogram, exit)
-			title = fmt.Sprintf("%s: %s", opts.Symbol.Value(), opts.Title.Value())
-			// title = opts.Title.Value()
-			// if conf.Format == "" {
-			// } else {
-			// 	title = opts.Title.Value()
-			// }
+			title = fmt.Sprintf("%s%s %s", opts.Symbol.Value(), conf.Separator, opts.Title.Value())
 		}
 
 		tprogram = tea.NewProgram(textArea.InitTextAreaModel(opts.Description, "Your description here", "Limit this to 72 words", &exit))
@@ -96,7 +91,8 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolP("add_all", "a", false, "Add all files before committing")
 	rootCmd.PersistentFlags().StringP("title", "t", "", "Skip the title step by adding your own")
-	rootCmd.PersistentFlags().StringP("format", "f", "", "Format the title prefix. Use $type and $symbol. Default is \"$type($symbol): $title\"")
+	rootCmd.PersistentFlags().StringP("format", "f", "<type> <symbol>", "Format the title prefix by using <type> and <symbol>")
+	rootCmd.PersistentFlags().StringP("separator", "s", ": ", "Separator between the prefix and title")
 }
 
 func bindFlags() {
@@ -108,7 +104,14 @@ func bindFlags() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = viper.BindPFlag("format", rootCmd.Flags().Lookup("format"))
+	err = viper.BindPFlag("format", rootCmd.PersistentFlags().Lookup("format"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = viper.BindPFlag("separator", rootCmd.PersistentFlags().Lookup("separator"))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func checkExit(tprogram *tea.Program, exit bool) {

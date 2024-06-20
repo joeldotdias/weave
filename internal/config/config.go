@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -10,14 +11,17 @@ import (
 )
 
 type WeaveConfig struct {
-	Add_all bool
-	Format  string
-	Title   string
-	Symbols map[string]string
+	Add_all   bool
+	Format    string
+	Title     string
+	Symbols   map[string]string
+	Separator string
 }
 
 func MakePresets() {
 	viper.SetDefault("add_all", false)
+	viper.SetDefault("format", "<type> <symbol>")
+	viper.SetDefault("separator", ": ")
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	if runtime.GOOS == "windows" {
@@ -35,6 +39,7 @@ func MakePresets() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fmt.Println("No config file")
 		}
+		log.Fatal(err)
 	}
 
 	viper.AddConfigPath(".")
@@ -45,22 +50,19 @@ func MakePresets() {
 
 func MakeConfig() WeaveConfig {
 	return WeaveConfig{
-		Add_all: viper.GetBool("add_all"),
-		Title:   viper.GetString("title"),
-		Format:  viper.GetString("format"),
-		Symbols: viper.GetStringMapString("symbols"),
+		Add_all:   viper.GetBool("add_all"),
+		Title:     viper.GetString("title"),
+		Format:    viper.GetString("format"),
+		Symbols:   viper.GetStringMapString("symbols"),
+		Separator: viper.GetString("separator"),
 	}
 }
 
 func (c *WeaveConfig) SymbolChoices(format string) []string {
 	choices := make([]string, len(c.Symbols))
-	if format == "" {
-		format = "$type $symbol"
-	}
 	i := 0
 	for kind, symbol := range c.Symbols {
-		// choices[i] = fmt.Sprintf("%s %s", kind, emoji)
-		choices[i] = strings.ReplaceAll(strings.ReplaceAll(format, "$type", kind), "$symbol", symbol)
+		choices[i] = strings.ReplaceAll(strings.ReplaceAll(format, "<type>", kind), "<symbol>", symbol)
 		i++
 	}
 	return choices
