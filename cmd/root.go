@@ -8,7 +8,9 @@ import (
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/joeldotdias/weave/internal/config"
+	"github.com/joeldotdias/weave/internal/tui"
 	"github.com/joeldotdias/weave/internal/tui/multiChoice"
 	"github.com/joeldotdias/weave/internal/tui/textArea"
 	"github.com/joeldotdias/weave/internal/tui/textInput"
@@ -17,32 +19,31 @@ import (
 )
 
 type Opts struct {
-	add_all     bool
 	Title       *textInput.Response
 	Symbol      *multiChoice.Selected
 	Description *textArea.Description
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "weave",
-	Short: "A tool to write better commit messages",
+	Use:     "weave",
+	Short:   "A tool to write better commit messages",
+	Version: "0.1.0",
 	Long: `Weave provides an intuituive TUI to write descriptive
 commit messages when needed.
-Configuration can be written at $XDG_CONFIG_HOME/.config/weave/config.toml`,
+Configuration can be written at $XDG_CONFIG_HOME/weave/config.toml`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		checkIfInsideGitRepo()
 
 		conf := config.MakeConfig()
 		opts := Opts{
-			add_all:     conf.Add_all,
 			Title:       &textInput.Response{},
 			Symbol:      &multiChoice.Selected{},
 			Description: &textArea.Description{},
 		}
 
 		var (
-			tprogram    *tea.Program
+			prog        *tea.Program
 			title, desc string
 			exit        bool
 			err         error
@@ -51,29 +52,30 @@ Configuration can be written at $XDG_CONFIG_HOME/.config/weave/config.toml`,
 		if len(conf.Title) != 0 {
 			title = conf.Title
 		} else {
-			tprogram = tea.NewProgram(textInput.InitTextInputModel(opts.Title, "Your title here...", &exit))
-			if _, err = tprogram.Run(); err != nil {
+			prog = tea.NewProgram(textInput.InitTextInputModel(opts.Title, "Your title here...", &exit))
+			if _, err = prog.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
-			checkExit(tprogram, exit)
+			checkExit(prog, exit)
 
-			tprogram = tea.NewProgram(multiChoice.InitMultiChoiceModel(conf.SymbolChoices(conf.Format), opts.Symbol, "Choose symbol", &exit))
-			if _, err = tprogram.Run(); err != nil {
+			prog = tea.NewProgram(multiChoice.InitMultiChoiceModel(conf.SymbolChoices(conf.Format), opts.Symbol, "Choose your prefix", &exit))
+			if _, err = prog.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
-			checkExit(tprogram, exit)
+			checkExit(prog, exit)
 			title = fmt.Sprintf("%s%s %s", opts.Symbol.Value(), conf.Separator, opts.Title.Value())
 		}
 
-		tprogram = tea.NewProgram(textArea.InitTextAreaModel(opts.Description, "Your description here", "Limit this to 72 words", &exit))
-		if _, err = tprogram.Run(); err != nil {
+		prog = tea.NewProgram(textArea.InitTextAreaModel(opts.Description, "Your description here", "Limit this to 72 words", &exit))
+		if _, err = prog.Run(); err != nil {
 			cobra.CheckErr(err)
 		}
-		checkExit(tprogram, exit)
+		checkExit(prog, exit)
 		desc = opts.Description.Value()
 
+		fmt.Println(tui.NotifStyle.Render("Making your commit now"))
 		if err = makeCommit(title, desc, conf.Add_all); err != nil {
-			fmt.Println("Whoops, you might not have added anything to commit")
+			fmt.Println(tui.ErrStyle.Render("Whoops, you might not have added anything to commit"))
 		}
 	},
 }
@@ -114,9 +116,9 @@ func bindFlags() {
 	}
 }
 
-func checkExit(tprogram *tea.Program, exit bool) {
+func checkExit(prog *tea.Program, exit bool) {
 	if exit {
-		if err := tprogram.ReleaseTerminal(); err != nil {
+		if err := prog.ReleaseTerminal(); err != nil {
 			log.Fatal(err)
 			os.Exit(1)
 		}

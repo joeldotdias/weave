@@ -20,6 +20,26 @@ func (s *Selected) Value() string {
 	return s.Choice
 }
 
+type helpKey struct {
+	key  string
+	help string
+}
+
+var helpKeys = [...]helpKey{
+	{
+		key:  "↑/k",
+		help: "move up",
+	},
+	{
+		key:  "↓/j",
+		help: "move down",
+	},
+	{
+		key:  "Space",
+		help: "select",
+	},
+}
+
 type model struct {
 	cursor   int
 	choices  []string
@@ -91,19 +111,24 @@ func (m model) View() string {
 		cursor := " "
 		option = choice
 		if m.cursor == i {
-			cursor = tui.FocusedStyle.Render(">")
+			cursor = tui.HighlightStyle.Render(">")
 			option = tui.SelectedItemStyle.Render(choice)
 		}
 
 		checked := " "
 		if _, ok := m.selected[i]; ok {
-			checked = tui.FocusedStyle.Render("x")
+			checked = tui.HighlightStyle.Render("x")
 		}
 
 		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, option)
 	}
 
-	s += fmt.Sprintf("\nPress %s to confirm choice\n", tui.FocusedStyle.Render("y"))
+	s += "\n"
+	for _, key := range helpKeys {
+		s += tui.HelpStyle.Render(fmt.Sprintf("%s %s ", key.key, key.help))
+	}
+
+	s += fmt.Sprintf("\n Press %s to confirm choice\n", tui.HighlightStyle.Render("y"))
 
 	return s
 }

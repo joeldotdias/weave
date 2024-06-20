@@ -34,7 +34,6 @@ type model struct {
 
 func InitTextAreaModel(description *Description, header string, hint string, exit *bool) model {
 	ta := textarea.New()
-	ta.Placeholder = "Limit your description to 72 words"
 	ta.Focus()
 
 	return model{
@@ -87,9 +86,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"%s\n%s\n\n%s",
+		"%s\n%s\n\n%s\n%s",
 		m.header,
 		m.textArea.View(),
 		m.hint,
+		tui.HelpStyle.Render(fmt.Sprintf("Press %s to confirm and make the commit", tui.HighlightStyle.Render("ctrl+y"))),
 	)
 }
