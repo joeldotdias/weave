@@ -1,6 +1,6 @@
 module github.com/joeldotdias/weave
 
-go 1.22.4
+go 1.20
 
 require (
 	github.com/charmbracelet/bubbles v0.18.0

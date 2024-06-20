@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
 type WeaveConfig struct {
 	Add_all bool
+	Format  string
 	Title   string
 	Symbols map[string]string
 }
@@ -38,26 +40,27 @@ func MakePresets() {
 	viper.AddConfigPath(".")
 	viper.SetConfigName("weave")
 	viper.SetConfigType("toml")
-	if err := viper.MergeInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("No local env found. Using global config")
-		}
-	}
+	viper.MergeInConfig()
 }
 
 func MakeConfig() WeaveConfig {
 	return WeaveConfig{
 		Add_all: viper.GetBool("add_all"),
 		Title:   viper.GetString("title"),
+		Format:  viper.GetString("format"),
 		Symbols: viper.GetStringMapString("symbols"),
 	}
 }
 
-func (c *WeaveConfig) SymbolChoices() []string {
+func (c *WeaveConfig) SymbolChoices(format string) []string {
 	choices := make([]string, len(c.Symbols))
+	if format == "" {
+		format = "$type $symbol"
+	}
 	i := 0
-	for name, emoji := range c.Symbols {
-		choices[i] = fmt.Sprintf("%s %s", name, emoji)
+	for kind, symbol := range c.Symbols {
+		// choices[i] = fmt.Sprintf("%s %s", kind, emoji)
+		choices[i] = strings.ReplaceAll(strings.ReplaceAll(format, "$type", kind), "$symbol", symbol)
 		i++
 	}
 	return choices

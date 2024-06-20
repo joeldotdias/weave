@@ -32,7 +32,7 @@ type model struct {
 	exit        *bool
 }
 
-func InitTextAreaModel(description *Description, header string, hint string) model {
+func InitTextAreaModel(description *Description, header string, hint string, exit *bool) model {
 	ta := textarea.New()
 	ta.Placeholder = "Limit your description to 72 words"
 	ta.Focus()
@@ -43,6 +43,7 @@ func InitTextAreaModel(description *Description, header string, hint string) mod
 		description: description,
 		header:      tui.HeaderStyle.Render(header),
 		hint:        tui.HelpStyle.Render(fmt.Sprintf("(%s)", hint)),
+		exit:        exit,
 	}
 }
 
@@ -58,11 +59,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
+			*m.exit = true
 			return m, tea.Quit
 		case tea.KeyCtrlY:
 			input := m.textArea.Value()
 			if len(input) > 0 && len(strings.Fields(input)) <= 72 {
 				m.description.update(input)
+				m.textArea.Blur()
 				return m, tea.Quit
 			}
 		default:

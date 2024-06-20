@@ -29,12 +29,13 @@ type model struct {
 	exit     *bool
 }
 
-func InitMultiChoiceModel(choices []string, selected *Selected, header string) model {
+func InitMultiChoiceModel(choices []string, selected *Selected, header string, exit *bool) model {
 	return model{
 		choices:  choices,
 		selected: make(map[int]struct{}),
 		choice:   selected,
 		header:   tui.HeaderStyle.Render(header),
+		exit:     exit,
 	}
 }
 

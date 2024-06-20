@@ -30,7 +30,7 @@ type model struct {
 	exit      *bool
 }
 
-func InitTextInputModel(response *Response, header string) model {
+func InitTextInputModel(response *Response, header string, exit *bool) model {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 150
@@ -41,6 +41,7 @@ func InitTextInputModel(response *Response, header string) model {
 		err:       nil,
 		response:  response,
 		header:    tui.HeaderStyle.Render(header),
+		exit:      exit,
 	}
 }
 
@@ -58,10 +59,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			input := m.textInput.Value()
 			if len(input) > 0 {
 				m.response.update(input)
+				m.textInput.Blur()
 				return m, tea.Quit
 			}
 		case tea.KeyCtrlC, tea.KeyEsc:
 			*m.exit = true
+			m.textInput.Blur()
 			return m, tea.Quit
 		}
 	case errMsg:
