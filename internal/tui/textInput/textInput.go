@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/joeldotdias/weave/internal/tui"
 )
 
 type errMsg error
@@ -31,7 +31,6 @@ type model struct {
 }
 
 func InitTextInputModel(response *Response, header string) model {
-	var header_style = lipgloss.NewStyle().Background(lipgloss.Color("#01FAC6")).Foreground(lipgloss.Color("#030303")).Bold(true).Padding(0, 1, 0)
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 150
@@ -41,7 +40,7 @@ func InitTextInputModel(response *Response, header string) model {
 		textInput: ti,
 		err:       nil,
 		response:  response,
-		header:    header_style.Render(header),
+		header:    tui.HeaderStyle.Render(header),
 	}
 }
 
@@ -76,5 +75,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf("%s\n\n%s\n", m.header, m.textInput.View())
+	return fmt.Sprintf("%s\n%s\n", m.header, m.textInput.View())
 }

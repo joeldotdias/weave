@@ -7,7 +7,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/joeldotdias/weave/internal/config"
-	"github.com/joeldotdias/weave/internal/tui/multiInput"
+	"github.com/joeldotdias/weave/internal/tui/multiChoice"
+	"github.com/joeldotdias/weave/internal/tui/textArea"
 	"github.com/joeldotdias/weave/internal/tui/textInput"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,17 +25,16 @@ Configuration can be written at $XDG_CONFIG_HOME/.config/weave/config.toml`,
 
 func weave(cmd *cobra.Command, args []string) {
 	conf := config.MakeConfig()
-	// fmt.Printf("Add all: %t\n", conf.Add_all)
-	// fmt.Printf("Title: %s\n", conf.Title)
-	// for k, v := range conf.Symbols {
-	// 	fmt.Printf("Name: %s, Emoji: %s\n", k, v)
-	// }
+	opts := Opts{
+		Title:       &textInput.Response{},
+		Symbol:      &multiChoice.Selected{},
+		Description: &textArea.Description{},
+	}
+	var tprogram *tea.Program
 
-	opts := Opts{Title: &textInput.Response{}, Symbol: &multiInput.Selected{}}
+	tprogram = tea.NewProgram(textInput.InitTextInputModel(opts.Title, "Your title here..."))
 
-	tprogram := tea.NewProgram(textInput.InitTextInputModel(opts.Title, "Your title here..."))
-
-	var title string
+	var title, desc string
 	if len(conf.Title) != 0 {
 		title = conf.Title
 	} else {
@@ -44,19 +44,24 @@ func weave(cmd *cobra.Command, args []string) {
 		title = opts.Title.Value()
 	}
 
-	fmt.Println("\nYour title: ", title)
-
 	multiOptions := SymbolsList{
 		options: conf.SymbolChoices(),
 	}
 
-	tprogram = tea.NewProgram(multiInput.InitMultiInputModel(multiOptions.options, opts.Symbol, "Choose symbol"))
+	tprogram = tea.NewProgram(multiChoice.InitMultiChoiceModel(multiOptions.options, opts.Symbol, "Choose symbol"))
 	if _, err := tprogram.Run(); err != nil {
 		cobra.CheckErr(err)
 	}
 	symbol := opts.Symbol.Value()
-	fmt.Println("\nYour symbol: ", symbol)
 
+	tprogram = tea.NewProgram(textArea.InitTextAreaModel(opts.Description, "Your description here", "Limit this to 72 words"))
+	if _, err := tprogram.Run(); err != nil {
+		cobra.CheckErr(err)
+	}
+	desc = opts.Description.Value()
+
+	fmt.Printf("\nYour message: %s: %s", symbol, title)
+	fmt.Printf("\nYour Description:\n%s\n", desc)
 }
 
 func Execute() {
@@ -68,8 +73,9 @@ func Execute() {
 }
 
 type Opts struct {
-	Title  *textInput.Response
-	Symbol *multiInput.Selected
+	Title       *textInput.Response
+	Symbol      *multiChoice.Selected
+	Description *textArea.Description
 }
 
 type SymbolsList struct {

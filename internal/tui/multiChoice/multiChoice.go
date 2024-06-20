@@ -1,10 +1,11 @@
-package multiInput
+package multiChoice
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/joeldotdias/weave/internal/tui"
 )
 
 type Selected struct {
@@ -12,7 +13,7 @@ type Selected struct {
 }
 
 func (s *Selected) Update(value string) {
-	s.Choice = value
+	s.Choice = strings.TrimSpace(value)
 }
 
 func (s *Selected) Value() string {
@@ -28,13 +29,12 @@ type model struct {
 	exit     *bool
 }
 
-func InitMultiInputModel(choices []string, selected *Selected, header string) model {
-	var header_style = lipgloss.NewStyle().Background(lipgloss.Color("#01FAC6")).Foreground(lipgloss.Color("#030303")).Bold(true).Padding(0, 1, 0)
+func InitMultiChoiceModel(choices []string, selected *Selected, header string) model {
 	return model{
 		choices:  choices,
 		selected: make(map[int]struct{}),
 		choice:   selected,
-		header:   header_style.Render(header),
+		header:   tui.HeaderStyle.Render(header),
 	}
 }
 
@@ -70,6 +70,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "y":
 			if len(m.selected) == 1 {
+				for selectedKey := range m.selected {
+					m.choice.Update(m.choices[selectedKey])
+					m.cursor = selectedKey
+				}
 				return m, tea.Quit
 			}
 		}
@@ -79,24 +83,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	var focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#01FAC6")).Bold(true)
-	s := m.header + "\n"
+	s := "\n" + m.header + "\n"
 
+	var option string
 	for i, choice := range m.choices {
 		cursor := " "
-		if m.cursor == 1 {
-			cursor = focusedStyle.Render(">")
+		option = choice
+		if m.cursor == i {
+			cursor = tui.FocusedStyle.Render(">")
+			option = tui.SelectedItemStyle.Render(choice)
 		}
 
 		checked := " "
 		if _, ok := m.selected[i]; ok {
-			checked = focusedStyle.Render("x")
+			checked = tui.FocusedStyle.Render("x")
 		}
 
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, option)
 	}
 
-	s += fmt.Sprintf("\nPress %s to confirm choice\n", focusedStyle.Render("y"))
+	s += fmt.Sprintf("\nPress %s to confirm choice\n", tui.FocusedStyle.Render("y"))
 
 	return s
 }
