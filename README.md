@@ -61,4 +61,9 @@ separator = ": "
 feat = "🚀"
 fix = "🛠️"
 chore = "📦"
+
+[themes]
+header_bg = "#8AF3FFEE" # Background color of the header
+header_fg = "#1e1e1e" # Text color of the header
+selected_opt = "#3F56EB" # highlighting the selected prefix from the list
 ```

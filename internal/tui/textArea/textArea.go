@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/joeldotdias/weave/internal/config"
 	"github.com/joeldotdias/weave/internal/tui"
 )
 
@@ -29,10 +30,11 @@ type model struct {
 	description *Description
 	header      string
 	hint        string
+	colors      *config.Colors
 	exit        *bool
 }
 
-func InitTextAreaModel(description *Description, header string, hint string, exit *bool) model {
+func InitTextAreaModel(description *Description, header string, hint string, colors *config.Colors, exit *bool) model {
 	ta := textarea.New()
 	ta.Focus()
 
@@ -40,8 +42,9 @@ func InitTextAreaModel(description *Description, header string, hint string, exi
 		textArea:    ta,
 		err:         nil,
 		description: description,
-		header:      tui.HeaderStyle.Render(header),
-		hint:        tui.HelpStyle.Render(fmt.Sprintf("(%s)", hint)),
+		header:      header,
+		hint:        hint,
+		colors:      colors,
 		exit:        exit,
 	}
 }
@@ -87,9 +90,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	return fmt.Sprintf(
 		"%s\n%s\n\n%s\n%s",
-		m.header,
+		tui.HeaderStyle(m.colors.HeaderBg, m.colors.HeaderFg).Render(m.header),
 		m.textArea.View(),
-		m.hint,
+		tui.HelpStyle.Render("("+m.hint+")"),
 		tui.HelpStyle.Render(fmt.Sprintf("Press %s to confirm and make the commit", tui.HighlightStyle.Render("ctrl+y"))),
 	)
 }

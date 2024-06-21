@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/joeldotdias/weave/internal/config"
 	"github.com/joeldotdias/weave/internal/tui"
 )
 
@@ -27,10 +28,11 @@ type model struct {
 	err       error
 	response  *Response
 	header    string
+	colors    *config.Colors
 	exit      *bool
 }
 
-func InitTextInputModel(response *Response, header string, exit *bool) model {
+func InitTextInputModel(response *Response, header string, colors *config.Colors, exit *bool) model {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 150
@@ -40,7 +42,8 @@ func InitTextInputModel(response *Response, header string, exit *bool) model {
 		textInput: ti,
 		err:       nil,
 		response:  response,
-		header:    tui.HeaderStyle.Render(header),
+		colors:    colors,
+		header:    header,
 		exit:      exit,
 	}
 }
@@ -78,5 +81,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf("%s\n%s\n", m.header, m.textInput.View())
+	return fmt.Sprintf("%s\n%s\n", tui.HeaderStyle(m.colors.HeaderBg, m.colors.HeaderFg).Render(m.header), m.textInput.View())
 }

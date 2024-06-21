@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/joeldotdias/weave/internal/config"
 	"github.com/joeldotdias/weave/internal/tui"
 )
 
@@ -43,18 +44,20 @@ var helpKeys = [...]helpKey{
 type model struct {
 	cursor   int
 	choices  []string
+	colors   *config.Colors
 	selected map[int]struct{}
 	choice   *Selected
 	header   string
 	exit     *bool
 }
 
-func InitMultiChoiceModel(choices []string, selected *Selected, header string, exit *bool) model {
+func InitMultiChoiceModel(choices []string, selected *Selected, header string, colors *config.Colors, exit *bool) model {
 	return model{
 		choices:  choices,
 		selected: make(map[int]struct{}),
 		choice:   selected,
-		header:   tui.HeaderStyle.Render(header),
+		colors:   colors,
+		header:   header,
 		exit:     exit,
 	}
 }
@@ -104,7 +107,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "\n" + m.header + "\n"
+	s := "\n" + tui.HeaderStyle(m.colors.HeaderBg, m.colors.HeaderFg).Render(m.header) + "\n"
 
 	var option string
 	for i, choice := range m.choices {
@@ -112,7 +115,7 @@ func (m model) View() string {
 		option = choice
 		if m.cursor == i {
 			cursor = tui.HighlightStyle.Render(">")
-			option = tui.SelectedItemStyle.Render(choice)
+			option = tui.SelectedItemStyle(m.colors.SelectedOpt).Render(choice)
 		}
 
 		checked := " "

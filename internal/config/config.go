@@ -16,6 +16,13 @@ type WeaveConfig struct {
 	Title     string
 	Symbols   map[string]string
 	Separator string
+	Theme     Colors
+}
+
+type Colors struct {
+	HeaderBg    string
+	HeaderFg    string
+	SelectedOpt string
 }
 
 func MakePresets() {
@@ -49,12 +56,20 @@ func MakePresets() {
 }
 
 func MakeConfig() WeaveConfig {
+	colors := viper.GetStringMapString("theme")
+	theme := Colors{
+		HeaderBg:    colors["header_bg"],
+		HeaderFg:    colors["header_fg"],
+		SelectedOpt: colors["selected_opt"],
+	}
+
 	return WeaveConfig{
 		Add_all:   viper.GetBool("add_all"),
 		Title:     viper.GetString("title"),
 		Format:    viper.GetString("format"),
-		Symbols:   viper.GetStringMapString("symbols"),
 		Separator: viper.GetString("separator"),
+		Symbols:   viper.GetStringMapString("symbols"),
+		Theme:     theme,
 	}
 }
 
